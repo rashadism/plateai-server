@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: PlateAI - Meal Tracking API
+  description: >-
+    This is the API specification for PlateAI, a meal tracking application that helps users
+    log their daily food intake and get nutritional analysis. Users can create, view, edit,
+    and delete meal entries with detailed nutritional breakdowns.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  version: 1.0.0
+externalDocs:
+  description: PlateAI Documentation
+  url: https://plateai.com
+servers:
+  - url: http://localhost:8000
+tags:
+  - name: auth
+    description: User authentication and registration
+  - name: meals
+    description: Meal tracking and nutritional analysis API
+paths:
+  /:
+    summary: Health check endpoint
+    get:
+      summary: Health check
+      operationId: HealthCheck
+      responses:
+        "200":
+          description: Server is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "PlateAI server is running."
+
+  /api/auth/signup:
+    summary: User registration
+    post:
+      summary: Create a new user account
+      operationId: SignUp
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAuthResponse"
+        "400":
+          description: Username already taken
+        "422":
+          description: Validation error
+
+  /api/auth/signin:
+    summary: User login
+    post:
+      summary: Authenticate user and get access token
+      operationId: SignIn
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAuthResponse"
+        "401":
+          description: Invalid credentials
+        "422":
+          description: Validation error
+
+  /api/auth/token:
+    summary: OAuth2 token endpoint
+    post:
+      summary: Get access token using OAuth2 password flow
+      operationId: GetToken
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/OAuth2Request"
+      responses:
+        "200":
+          description: Token generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuth2Response"
+        "401":
+          description: Invalid credentials
+
+  /api/meals/analyze:
+    summary: Analyze meal description
+    post:
+      summary: Analyze natural language meal description and return nutritional breakdown
+      operationId: AnalyzeMeal
+      tags:
+        - meals
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealAnalysisRequest"
+      responses:
+        "200":
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealAnalysisResponse"
+        "401":
+          description: Unauthorized
+        "422":
+          description: Validation error
+
+  /api/meals/:
+    summary: Meal management
+    get:
+      summary: Get all meals for the authenticated user
+      operationId: GetMeals
+      tags:
+        - meals
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of meals retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MealSummary"
+        "401":
+          description: Unauthorized
+    post:
+      summary: Create a new meal entry
+      operationId: CreateMeal
+      tags:
+        - meals
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealCreate"
+      responses:
+        "201":
+          description: Meal created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealResponse"
+        "401":
+          description: Unauthorized
+        "422":
+          description: Validation error
+
+  /api/meals/{meal_id}:
+    summary: Individual meal operations
+    get:
+      summary: Get meal by ID
+      operationId: GetMeal
+      tags:
+        - meals
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: meal_id
+          in: path
+          description: UUID of the meal to retrieve
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Meal retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealDetail"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Meal not found
+    put:
+      summary: Update meal by ID
+      operationId: UpdateMeal
+      tags:
+        - meals
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: meal_id
+          in: path
+          description: UUID of the meal to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MealCreate"
+      responses:
+        "200":
+          description: Meal updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Meal not found
+        "422":
+          description: Validation error
+    delete:
+      summary: Delete meal by ID
+      operationId: DeleteMeal
+      tags:
+        - meals
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: meal_id
+          in: path
+          description: UUID of the meal to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Meal deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Meal not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserCreate:
+      type: object
+      required:
+        - name
+        - username
+        - password
+      properties:
+        name:
+          type: string
+          description: Full name of the user
+          example: "John Doe"
+        username:
+          type: string
+          description: Unique username for login
+          example: "johndoe"
+        password:
+          type: string
+          description: User password
+          example: "securepassword123"
+
+    UserLogin:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username for login
+          example: "johndoe"
+        password:
+          type: string
+          description: User password
+          example: "securepassword123"
+
+    UserAuthResponse:
+      type: object
+      required:
+        - userId
+        - token
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: Unique identifier for the user
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    OAuth2Request:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        grant_type:
+          type: string
+          enum: [password]
+          example: "password"
+        username:
+          type: string
+          description: Username for authentication
+          example: "johndoe"
+        password:
+          type: string
+          description: User password
+          example: "securepassword123"
+        scope:
+          type: string
+          default: ""
+          example: ""
+
+    OAuth2Response:
+      type: object
+      required:
+        - access_token
+        - token_type
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          enum: [bearer]
+          example: "bearer"
+
+    MealAnalysisRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          description: Natural language description of the meal
+          example: "I had a bowl of oatmeal with berries and a glass of orange juice"
+
+    MealAnalysisResponse:
+      type: object
+      required:
+        - components
+      properties:
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealComponent"
+          description: List of identified food components with nutritional information
+
+    MealComponent:
+      type: object
+      required:
+        - name
+        - calories
+        - fat_g
+        - protein_g
+        - carbs_g
+      properties:
+        name:
+          type: string
+          description: Name of the food item
+          example: "Oatmeal"
+        calories:
+          type: number
+          format: float
+          description: Calories per serving
+          example: 150
+        fat_g:
+          type: number
+          format: float
+          description: Fat content in grams
+          example: 3.0
+        protein_g:
+          type: number
+          format: float
+          description: Protein content in grams
+          example: 5.0
+        carbs_g:
+          type: number
+          format: float
+          description: Carbohydrate content in grams
+          example: 27.0
+
+    MealCreate:
+      type: object
+      required:
+        - meal_date
+        - components
+      properties:
+        meal_date:
+          type: string
+          format: date-time
+          description: Date and time of the meal
+          example: "2024-01-15T12:30:00Z"
+        description:
+          type: string
+          description: Optional description of the meal
+          example: "Lunch - grilled chicken salad"
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealComponent"
+          description: List of food components in the meal
+
+    MealSummary:
+      type: object
+      required:
+        - mealId
+        - meal_date
+        - description
+        - total_calories
+      properties:
+        mealId:
+          type: string
+          format: uuid
+          description: Unique identifier for the meal
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        meal_date:
+          type: string
+          format: date-time
+          description: Date and time of the meal
+          example: "2024-01-15T12:30:00Z"
+        description:
+          type: string
+          description: Description of the meal
+          example: "Lunch - grilled chicken salad"
+        total_calories:
+          type: number
+          format: float
+          description: Total calories for the meal
+          example: 450
+
+    MealDetail:
+      type: object
+      required:
+        - mealId
+        - meal_date
+        - description
+        - components
+      properties:
+        mealId:
+          type: string
+          format: uuid
+          description: Unique identifier for the meal
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        meal_date:
+          type: string
+          format: date-time
+          description: Date and time of the meal
+          example: "2024-01-15T12:30:00Z"
+        description:
+          type: string
+          description: Description of the meal
+          example: "Lunch - grilled chicken salad"
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealComponent"
+          description: List of food components in the meal
+
+    MealResponse:
+      type: object
+      required:
+        - mealId
+        - message
+      properties:
+        mealId:
+          type: string
+          format: uuid
+          description: Unique identifier for the created/updated meal
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        message:
+          type: string
+          description: Success message
+          example: "Meal saved successfully" 
