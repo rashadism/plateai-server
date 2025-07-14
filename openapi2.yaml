@@ -1,0 +1,485 @@
+openapi: 3.0.3 # 3.1.0
+info:
+  title: PlateAI API
+  version: '1.0'
+paths:
+  /:
+    get:
+      summary: Read Root
+      operationId: read_root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Read Root  Get
+  /api/auth/signup:
+    post:
+      tags:
+      - auth
+      summary: Signup
+      operationId: signup_api_auth_signup_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAuthResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/auth/token:
+    post:
+      tags:
+      - auth
+      summary: Login For Access Token
+      operationId: login_for_access_token_api_auth_token_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_for_access_token_api_auth_token_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/auth/signin:
+    post:
+      tags:
+      - auth
+      summary: Signin
+      operationId: signin_api_auth_signin_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAuthResponse'
+  /api/meals/analyze:
+    post:
+      tags:
+      - meals
+      summary: Analyze Meal
+      operationId: analyze_meal_api_meals_analyze_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              type: object
+              title: Request
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealAnalysisResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/meals/:
+    get:
+      tags:
+      - meals
+      summary: Get Meals
+      operationId: get_meals_api_meals__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+    post:
+      tags:
+      - meals
+      summary: Create Meal
+      operationId: create_meal_api_meals__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/meals/{meal_id}:
+    get:
+      tags:
+      - meals
+      summary: Get Meal
+      operationId: get_meal_api_meals__meal_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: meal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Meal Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - meals
+      summary: Update Meal
+      operationId: update_meal_api_meals__meal_id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: meal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Meal Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - meals
+      summary: Delete Meal
+      operationId: delete_meal_api_meals__meal_id__delete
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: meal_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Meal Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    Body_login_for_access_token_api_auth_token_post:
+      properties:
+        grant_type:
+          anyOf:
+          - type: string
+            pattern: ^password$
+          - type: 'null'
+          title: Grant Type
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          format: password
+          title: Password
+        scope:
+          type: string
+          title: Scope
+          default: ''
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          format: password
+          title: Client Secret
+      type: object
+      required:
+      - username
+      - password
+      title: Body_login_for_access_token_api_auth_token_post
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MealAnalysisResponse:
+      properties:
+        components:
+          items:
+            $ref: '#/components/schemas/MealComponentBase'
+          type: array
+          title: Components
+          description: List of analyzed meal components with estimated nutritional
+            information
+          examples:
+          - - calories: 150.0
+              carbs_g: 27.0
+              fat_g: 3.0
+              name: Oatmeal
+              protein_g: 5.0
+            - calories: 110.0
+              carbs_g: 25.0
+              fat_g: 0.5
+              name: Orange Juice
+              protein_g: 2.0
+      type: object
+      required:
+      - components
+      title: MealAnalysisResponse
+      description: Response schema for meal analysis endpoint
+    MealComponentBase:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The name of the food item
+          examples:
+          - Chicken Breast
+        calories:
+          type: number
+          title: Calories
+          description: The amount of calories in the food item
+          examples:
+          - 165.0
+        fat_g:
+          type: number
+          title: Fat G
+          description: The amount of fat in grams
+          examples:
+          - 3.6
+        protein_g:
+          type: number
+          title: Protein G
+          description: The amount of protein in grams
+          examples:
+          - 31.0
+        carbs_g:
+          type: number
+          title: Carbs G
+          description: The amount of carbs in grams
+          examples:
+          - 0.0
+      type: object
+      required:
+      - name
+      - calories
+      - fat_g
+      - protein_g
+      - carbs_g
+      title: MealComponentBase
+    MealComponentCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The name of the food item
+          examples:
+          - Chicken Breast
+        calories:
+          type: number
+          title: Calories
+          description: The amount of calories in the food item
+          examples:
+          - 165.0
+        fat_g:
+          type: number
+          title: Fat G
+          description: The amount of fat in grams
+          examples:
+          - 3.6
+        protein_g:
+          type: number
+          title: Protein G
+          description: The amount of protein in grams
+          examples:
+          - 31.0
+        carbs_g:
+          type: number
+          title: Carbs G
+          description: The amount of carbs in grams
+          examples:
+          - 0.0
+      type: object
+      required:
+      - name
+      - calories
+      - fat_g
+      - protein_g
+      - carbs_g
+      title: MealComponentCreate
+    MealCreate:
+      properties:
+        meal_date:
+          type: string
+          format: date-time
+          title: Meal Date
+          examples:
+          - '2024-06-01T12:00:00Z'
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+          examples:
+          - Grilled chicken lunch
+        components:
+          items:
+            $ref: '#/components/schemas/MealComponentCreate'
+          type: array
+          title: Components
+          examples:
+          - - calories: 165.0
+              carbs_g: 0.0
+              fat_g: 3.6
+              name: Chicken Breast
+              protein_g: 31.0
+      type: object
+      required:
+      - meal_date
+      - components
+      title: MealCreate
+    UserAuthResponse:
+      properties:
+        userId:
+          type: string
+          format: uuid
+          title: Userid
+          examples:
+          - 123e4567-e89b-12d3-a456-426614174000
+        token:
+          type: string
+          title: Token
+          examples:
+          - eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      type: object
+      required:
+      - userId
+      - token
+      title: UserAuthResponse
+    UserCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+          examples:
+          - John Doe
+        username:
+          type: string
+          title: Username
+          examples:
+          - johndoe
+        password:
+          type: string
+          title: Password
+          examples:
+          - strongpassword123
+      type: object
+      required:
+      - name
+      - username
+      - password
+      title: UserCreate
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/auth/token
