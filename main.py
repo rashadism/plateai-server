@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from utils.database import engine, Base
+# from utils.database import engine, Base
 from routers import auth
 from routers import meals
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +25,6 @@ app.include_router(meals.router, prefix="/api/meals", tags=["meals"])
 
 # Meals router
 
-@app.on_event("startup")
-def on_startup():
-    Base.metadata.create_all(bind=engine)
+# @app.on_event("startup")
+# def on_startup():
+#     Base.metadata.create_all(bind=engine)
